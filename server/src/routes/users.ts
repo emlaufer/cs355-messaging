@@ -18,17 +18,31 @@ router.get('/users', async (_req, res) => {
 });
 
 /**
- * Get user by ID
- * @route GET /users/:id
+ * Update user's public key
+ * @route PUT /users/:id/publickey
+ * @body {publicKey}
  */
-router.get('/users/:id', async (req, res) => {
+router.put('/users/:id/publickey', async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    const { id } = req.params;
+    const { publicKey } = req.body;
+
+    if (!publicKey) {
+      return res.status(400).json({ error: 'Public key is required' });
+    }
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    user.publicKey = publicKey;
+    await user.save();
+
     res.status(200).json(user);
   } catch (err) {
-    console.error('Error fetching user:', err);
-    res.status(500).json({ error: 'Failed to fetch user' });
+    console.error('Error updating user public key:', err);
+    res.status(500).json({ error: 'Failed to update user public key' });
   }
 });
 

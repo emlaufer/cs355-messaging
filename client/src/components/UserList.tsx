@@ -18,9 +18,7 @@ const UserList = ({ users, selectedUserIds, onSelectUser }: UserListProps) => {
         <CardTitle className="flex justify-between items-center">
           <span>Users</span>
           {selectedUserIds.length > 0 && (
-            <Badge variant="secondary">
-              {selectedUserIds.length} selected
-            </Badge>
+            <Badge variant="secondary">{selectedUserIds.length} selected</Badge>
           )}
         </CardTitle>
       </CardHeader>
@@ -28,7 +26,7 @@ const UserList = ({ users, selectedUserIds, onSelectUser }: UserListProps) => {
         <ScrollArea className="h-[calc(100vh-300px)] px-4 pb-4">
           <div className="space-y-2">
             {users.map((user) => {
-              const isSelected = selectedUserIds.includes(user.id);
+              const isSelected = selectedUserIds.includes(user._id);
               const initials = user.name
                 .split(' ')
                 .map((n) => n[0])
@@ -37,21 +35,30 @@ const UserList = ({ users, selectedUserIds, onSelectUser }: UserListProps) => {
 
               return (
                 <div
-                  key={user.id}
+                  key={user._id}
                   className={cn(
-                    "flex items-center gap-3 rounded-md p-2 cursor-pointer transition-colors",
-                    isSelected 
-                      ? "bg-primary/10 text-primary" 
-                      : "hover:bg-muted"
+                    'flex items-center gap-3 rounded-md p-2 cursor-pointer transition-colors',
+                    isSelected ? 'bg-primary/10 text-primary' : 'hover:bg-muted',
                   )}
-                  onClick={() => onSelectUser(user.id)}
+                  onClick={() => onSelectUser(user._id)}
                 >
                   <Avatar className="h-9 w-9 relative">
                     <AvatarImage src={user.avatar} alt={user.name} />
                     <AvatarFallback>{initials}</AvatarFallback>
                     {isSelected && (
                       <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="10"
+                          height="10"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="text-white"
+                        >
                           <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
                       </div>
@@ -72,3 +79,4 @@ const UserList = ({ users, selectedUserIds, onSelectUser }: UserListProps) => {
 };
 
 export default UserList;
+

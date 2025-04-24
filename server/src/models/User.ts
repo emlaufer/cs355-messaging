@@ -1,22 +1,20 @@
 import mongoose from 'mongoose';
 
 export interface IUser extends mongoose.Document {
-  id: string;
   name: string;
   avatar: string;
-  role: string;
+  publicKey: string; // RSA public key for verification
+  id: string;
 }
 
 const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
-    avatar: { type: String, required: true },
-    role: { type: String, required: true },
+    avatar: { type: String },
+    publicKey: { type: String, required: true }, // Store the user's RSA public key
   },
   {
     timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
   },
 );
 

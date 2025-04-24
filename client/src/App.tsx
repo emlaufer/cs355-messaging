@@ -33,6 +33,7 @@ function App() {
   const addPost = async (newPost: Omit<Post, 'id' | 'timestamp'>) => {
     try {
       setLoading(true);
+      console.log('POST: ', newPost);
       const createdPost = await createPost(newPost);
       setPosts([createdPost, ...posts]);
       setError(null);

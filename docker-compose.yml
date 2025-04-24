@@ -16,6 +16,9 @@ services:
     volumes:
       # Mount source code for development (hot reload)
       - ./server:/app/server
+      # Mount plonky wasm verifier
+      # TODO: move this to github?
+      - ../plonky2-rsa-wasm-verify/pkg:/plonky2-rsa-wasm-verify/pkg
     # Command is defined in Dockerfile.dev
   client:
     image: node:23.11

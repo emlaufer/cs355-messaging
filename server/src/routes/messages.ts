@@ -1,5 +1,7 @@
 import express from 'express';
 import Message from '../models/Message';
+import User from '../models/User';
+import verifyProof from '../plonky2';
 
 const router = express.Router();
 
@@ -20,20 +22,42 @@ router.get('/messages', async (_req, res) => {
 /**
  * Create a new message
  * @route POST /messages
- * @body {userIds, message}
+ * @body {userIds, message, proof, verifierData, common}
  */
 router.post('/messages', async (req, res) => {
   try {
-    const { userIds, message } = req.body;
+    const { userIds, message, proof, verifierData, common } = req.body;
 
     if (!userIds || !Array.isArray(userIds) || userIds.length === 0 || !message) {
       return res.status(400).json({ error: 'UserIds array and message are required' });
+    }
+
+    // Verify that users exist and have public keys registered
+    const users = await User.find({ _id: { $in: userIds } });
+    if (users.length !== userIds.length) {
+      return res.status(400).json({ error: 'One or more users do not exist' });
+    }
+
+    // Verify the Plonky2 proof if provided
+    if (proof && verifierData && common) {
+      try {
+        const isValid = await verifyProof(proof, verifierData, common, []);
+        if (!isValid) {
+          return res.status(400).json({ error: 'Invalid proof' });
+        }
+      } catch (error) {
+        console.error('Error verifying proof:', error);
+        return res.status(400).json({ error: 'Proof verification failed' });
+      }
     }
 
     const newMessage = new Message({
       userIds,
       message,
       timestamp: new Date().toISOString(),
+      proof,
+      verifierData,
+      common,
     });
     await newMessage.save();
 

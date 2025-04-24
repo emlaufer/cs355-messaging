@@ -15,6 +15,7 @@
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "mongoose": "^7.6.1",
+    "plonky2_rsa_wasm_verify": "file:../plonky2-rsa-wasm-verify/pkg",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1"

@@ -12,14 +12,17 @@ interface PostItemProps {
 
 const PostItem = ({ post, users }: PostItemProps) => {
   const { userIds, message, timestamp } = post;
-  
+
   // Get all authors of this post
-  const authors = users.filter(user => userIds.includes(user.id));
-  
+  const authors = users.filter((user) => userIds.includes(user._id));
+
   // For display in the post header
-  const primaryAuthor = authors[0] || { name: "Unknown User", avatar: "https://i.pravatar.cc/150?img=0" };
+  const primaryAuthor = authors[0] || {
+    name: 'Unknown User',
+    avatar: 'https://i.pravatar.cc/150?img=0',
+  };
   const otherAuthors = authors.slice(1);
-  
+
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -44,8 +47,8 @@ const PostItem = ({ post, users }: PostItemProps) => {
                   <TooltipTrigger asChild>
                     <div>
                       <AvatarGroup limit={3}>
-                        {authors.map(author => (
-                          <Avatar key={author.id} className="h-8 w-8 border-2 border-background">
+                        {authors.map((author) => (
+                          <Avatar key={author._id} className="h-8 w-8 border-2 border-background">
                             <AvatarImage src={author.avatar} alt={author.name} />
                             <AvatarFallback>{getInitials(author.name)}</AvatarFallback>
                           </Avatar>
@@ -54,9 +57,7 @@ const PostItem = ({ post, users }: PostItemProps) => {
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <div className="text-xs">
-                      {authors.map(author => author.name).join(', ')}
-                    </div>
+                    <div className="text-xs">{authors.map((author) => author.name).join(', ')}</div>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -89,3 +90,4 @@ const PostItem = ({ post, users }: PostItemProps) => {
 };
 
 export default PostItem;
+

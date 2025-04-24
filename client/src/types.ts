@@ -1,13 +1,13 @@
 export interface User {
-  id: string;
+  _id: string;
   name: string;
   avatar: string;
-  role: string;
+  publicKey: string;
 }
 
 export interface Post {
-  id: string;
-  userIds: string[]; // Changed from userId to userIds array
+  _id: string;
+  userIds: string[];
   message: string;
   timestamp: string;
 }

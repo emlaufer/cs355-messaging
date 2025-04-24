@@ -7,6 +7,10 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
+# TODO: move this to github
+# Install wasm plonky2 verifier
+COPY ../plonky2-wasm-verify/pkg ./plonky2-wasm-verify/pkg
+
 # Build server
 COPY server ./server
 RUN npm run build
