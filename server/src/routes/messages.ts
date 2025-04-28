@@ -41,10 +41,11 @@ router.post('/messages', async (req, res) => {
     // Verify the Plonky2 proof if provided
     if (proof && verifierData && common) {
       try {
-        const isValid = await verifyProof(proof, verifierData, common, []);
-        if (!isValid) {
-          return res.status(400).json({ error: 'Invalid proof' });
-        }
+        // Fetch public keys of the users
+        const publicKeys = users.map((user) => user.publicKey || '').filter((key) => key !== ''); // Filter out empty keys
+        publicKeys.sort(); // Ensure consistent order for verification
+        //console.log('CHECKING PROOF:', proof, verifierData, common, message, publicKeys);
+        const isValid = await verifyProof(proof, verifierData, common, message, publicKeys);
       } catch (error) {
         console.error('Error verifying proof:', error);
         return res.status(400).json({ error: 'Proof verification failed' });

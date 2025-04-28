@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { User } from '../types';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
@@ -11,6 +11,8 @@ import {
   MultiSelectTrigger,
   MultiSelectValue,
 } from './ui/multi-select';
+import { Check } from 'lucide-react';
+import verifyProof from '@/utils/plonky';
 
 interface PostFormProps {
   users: User[];
@@ -45,9 +47,47 @@ const PostForm = ({
 
   const selectedUsers = users.filter((user) => selectedUserIds.includes(user._id));
 
+  // Re-verify proof when message, selected users, or proof data changes
+  useEffect(() => {
+    // Only proceed if we have proof data
+    if (proofData?.proof && proofData?.verifierData && proofData?.common) {
+      // Get selected users' public keys
+      const publicKeys = users
+        .filter((user) => selectedUserIds.includes(user._id))
+        .map((user) => user.publicKey || '')
+        .filter((key) => key !== '') // Filter out empty keys
+        .sort(); // Sort keys for consistent ordering
+
+      // Verify the proof with the current message and public keys
+      verifyProof(
+        proofData.proof,
+        proofData.verifierData,
+        proofData.common,
+        message,
+        publicKeys,
+      ).then(
+        (_) => {
+          setError(''); // Clear any previous errors if verification succeeds
+          console.log('Proof is valid!');
+        },
+        (exception) => {
+          console.log(
+            'Verification failed:',
+            proofData.proof,
+            proofData.verifierData,
+            proofData.common,
+            message,
+            publicKeys,
+          );
+          setError(exception);
+        },
+      );
+    }
+  }, [message, selectedUserIds, proofData, users]);
+
   const handleDownloadJson = () => {
     // Get selected users' public keys
-    const publicKeys = users
+    const public_keys = users
       .filter((user) => selectedUserIds.includes(user._id))
       .map((user) => user.publicKey || '')
       .filter((key) => key !== '') // Filter out empty keys
@@ -60,7 +100,7 @@ const PostForm = ({
 
     // Create download data
     const downloadData = {
-      publicKeys,
+      public_keys,
       message: message.trim(),
     };
 
@@ -103,12 +143,11 @@ const PostForm = ({
           return;
         }
 
-        // Map verifier_only to verifierData for consistency
-        setError('');
+        // Store the proof data - verification will be handled by useEffect
         setProofData({
           proof: jsonData.proof,
-          common: jsonData.common,
           verifierData: jsonData.verifier_only,
+          common: jsonData.common,
         });
       } catch (error) {
         setError('Invalid JSON file format');
@@ -234,7 +273,7 @@ const PostForm = ({
 
           <div>
             <label htmlFor="proof" className="block text-sm font-medium text-gray-700 mb-1">
-              Ring Signature Proof (optional)
+              Ring Signature Proof
             </label>
             <div className="flex items-center gap-2">
               <input
@@ -252,15 +291,23 @@ const PostForm = ({
                 Choose JSON File
               </Button>
               {proofFileName ? (
-                <span className="text-sm text-muted-foreground truncate max-w-[200px]">
-                  {proofFileName}
-                </span>
+                <div className="flex items-center w-full justify-between">
+                  <span className="text-sm text-muted-foreground truncate max-w-[200px]">
+                    {proofFileName}
+                  </span>
+                  {proofData && !error && (
+                    <div className="text-sm flex items-center gap-1 text-green-500 ml-auto">
+                      <Check className="w-4 h-4" />
+                      <span>Proof is valid</span>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <span className="text-sm text-muted-foreground">No file selected</span>
               )}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Upload a JSON file containing Plonky2 proof of signature
+              Upload a JSON file generated from your circuit!
             </p>
           </div>
 
@@ -270,7 +317,7 @@ const PostForm = ({
             <div className="flex items-center gap-2">
               {selectedUsers.length > 0 ? (
                 <span className="text-sm text-muted-foreground">
-                  Posting as {selectedUsers.length}{' '}
+                  Posting as one of {selectedUsers.length}{' '}
                   {selectedUsers.length === 1 ? 'author' : 'authors'}
                 </span>
               ) : (

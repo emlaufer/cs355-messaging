@@ -38,7 +38,7 @@ const MessageBoard = ({ posts, users, onAddPost, isLoading = false }: MessageBoa
   return (
     <div className="flex flex-col lg:flex-row gap-8">
       {/* Sidebar with users */}
-      <div className="lg:w-1/4">
+      <div className="hidden lg:block lg:w-1/4">
         <UserList users={users} selectedUserIds={selectedUserIds} onSelectUser={handleUserSelect} />
       </div>
 

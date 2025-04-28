@@ -39,7 +39,11 @@ function App() {
       setError(null);
     } catch (err) {
       console.error('Failed to add post', err);
-      setError('Failed to add message. Please try again later.');
+      if (err.response.data.error == 'Proof verification failed') {
+        setError('Failed to add message: invalid proof.');
+      } else {
+        setError('Failed to add message. Please try again later.');
+      }
     } finally {
       setLoading(false);
     }
