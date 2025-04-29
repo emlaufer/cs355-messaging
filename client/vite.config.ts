@@ -10,7 +10,11 @@ export default defineConfig({
   server: {
     port: 3000, // Set the desired port
     proxy: {
-      '/api': 'http://localhost:5000', // Proxy API requests to the backend
+      '/cgi-bin': {
+        target: 'http://localhost:8000', // If using CGI-based API, proxy to php server
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/cgi-bin/, ''),
+      },
     },
   },
   resolve: {
