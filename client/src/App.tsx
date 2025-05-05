@@ -1,11 +1,21 @@
 import { useState, useEffect } from 'react';
 import MessageBoard from './components/MessageBoard';
-import { Post, User } from './types';
-import { fetchPosts, createPost, fetchUsers } from './utils/api';
+import { ThemeProvider } from './components/ThemeProvider';
+import { Post, User, Circuit } from './types';
+import {
+  fetchPosts,
+  createPost,
+  fetchUsers,
+  createUser,
+  fetchCircuits,
+  createCircuit,
+} from './utils/api';
+import axios from 'axios';
 
 function App() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [circuits, setCircuits] = useState<Circuit[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -14,10 +24,15 @@ function App() {
     const loadData = async () => {
       try {
         setLoading(true);
-        const [fetchedPosts, fetchedUsers] = await Promise.all([fetchPosts(), fetchUsers()]);
+        const [fetchedPosts, fetchedUsers, fetchedCircuits] = await Promise.all([
+          fetchPosts(),
+          fetchUsers(),
+          fetchCircuits(),
+        ]);
 
         setPosts(fetchedPosts);
-        setUsers(fetchedUsers);
+        setUsers(fetchedUsers.sort((a, b) => a.name.localeCompare(b.name)));
+        setCircuits(fetchedCircuits);
         setError(null);
       } catch (err) {
         console.error('Failed to fetch data', err);
@@ -30,37 +45,85 @@ function App() {
     loadData();
   }, []);
 
-  const addPost = async (newPost: Omit<Post, 'id' | 'timestamp'>) => {
+  const addCircuit = async (newCircuit: Omit<Circuit, '_id'>) => {
     try {
+      const createdCircuit = await createCircuit(newCircuit);
+      setCircuits([createdCircuit, ...circuits]);
+      setError(null);
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        console.error('Failed to add circuit', err);
+        if (err.response?.data?.error === 'A circuit with this name already exists') {
+          setError('A circuit with this name already exists. Please choose a different name.');
+        } else {
+          setError('Failed to add circuit. Please try again later.');
+        }
+      } else {
+        console.error('Unexpected error', err);
+        setError('An unexpected error occurred. Please try again later.');
+      }
+    }
+  };
+
+  const addUser = async (newUser: Omit<User, '_id'>) => {
+    try {
+      const createdUser = await createUser(newUser);
+      setUsers([createdUser, ...users].sort((a, b) => a.name.localeCompare(b.name)));
+      setError(null);
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        console.error('Failed to add user', err);
+        setError('Failed to add user. Please try again later.');
+      } else {
+        console.error('Unexpected error', err);
+        setError('An unexpected error occurred. Please try again later.');
+      }
+    }
+  };
+
+  const addPost = async (newPost: Omit<Post, '_id' | 'timestamp'>) => {
+    try {
+      console.log('adding post', newPost);
       setLoading(true);
-      console.log('POST: ', newPost);
       const createdPost = await createPost(newPost);
       setPosts([createdPost, ...posts]);
       setError(null);
     } catch (err) {
-      console.error('Failed to add post', err);
-      if (err.response.data.error == 'Proof verification failed') {
-        setError('Failed to add message: invalid proof.');
+      if (axios.isAxiosError(err)) {
+        console.error('Failed to add post', err);
+        if (err.response?.data?.error === 'Proof verification failed') {
+          setError('Failed to add message: invalid proof.');
+        } else {
+          setError('Failed to add message. Please try again later.');
+        }
       } else {
-        setError('Failed to add message. Please try again later.');
+        console.error('Unexpected error', err);
+        setError('An unexpected error occurred. Please try again later.');
       }
     } finally {
       setLoading(false);
     }
   };
+  console.log(circuits);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-center text-gray-900 mb-8">Message Board</h1>
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
-            <span className="block sm:inline">{error}</span>
-          </div>
-        )}
-        <MessageBoard posts={posts} users={users} onAddPost={addPost} isLoading={loading} />
+    <ThemeProvider defaultTheme="light" storageKey="message-board-theme">
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto py-4 px-4 sm:px-6 lg:px-8">
+          <MessageBoard
+            posts={posts}
+            users={users}
+            circuits={circuits}
+            onAddPost={addPost}
+            onAddUser={addUser}
+            onAddCircuit={addCircuit}
+            error={error}
+            setError={setError}
+            isLoading={loading}
+          />
+        </div>
       </div>
-    </div>
+    </ThemeProvider>
   );
 }
 

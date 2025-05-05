@@ -4,7 +4,9 @@
   "scripts": {
     "client": "npm run dev --prefix client",
     "server": "nodemon server/src/server.ts",
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "cgi": "php -S localhost:8000 -t cgi/bin",
+    "dev:server": "concurrently \"npm run server\" \"npm run client\"",
+    "dev:cgi": "concurrently \"npm run cgi\" \"npm run client\"",
     "build": "tsc -p server",
     "lint": "eslint . --ext .ts,.tsx",
     "format": "prettier --write ."

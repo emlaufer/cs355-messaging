@@ -2,6 +2,7 @@ import * as React from 'react';
 import * as Popover from '@radix-ui/react-popover';
 import { createContext, useContext, useState, useEffect } from 'react';
 import { Check, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 // Define a type for selected items to track both value and content
 type SelectedItem = {
@@ -173,7 +174,6 @@ const MultiSelectTrigger = React.forwardRef<
           justifyContent: 'flex-start',
           width: '100%',
           padding: '8px 12px',
-          backgroundColor: 'white',
           cursor: 'pointer',
           ...props.style,
         }}
@@ -236,7 +236,6 @@ const MultiSelectTag = React.forwardRef<
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        backgroundColor: '#f1f1f1',
         borderRadius: '4px',
         padding: '2px 8px',
         fontSize: '14px',
@@ -250,7 +249,6 @@ const MultiSelectTag = React.forwardRef<
         aria-label={`Remove ${value}`}
         style={{
           border: 'none',
-          background: 'transparent',
           cursor: 'pointer',
           marginLeft: '4px',
           padding: '2px',
@@ -334,43 +332,37 @@ const MultiSelectContent = React.forwardRef<
           ref={forwardedRef}
           sideOffset={5}
           align="start"
+          //avoidCollisions={false}
+          className={cn(
+            props.className,
+            cn('bg-popover text-popover-foreground rounded-lg shadow-md'),
+          )}
           style={{
-            backgroundColor: 'white',
-            borderRadius: '4px',
-            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-            overflowY: 'auto',
-            zIndex: 1000,
             maxHeight: 'var(--radix-popover-content-available-height)',
             width: 'var(--radix-popover-trigger-width)',
-            ...props.style,
+            //transformOrigin: 'var(--radix-popover-content-transform-origin)',
           }}
         >
           {searchable && (
-            <div
-              style={{
-                padding: '8px',
-                position: 'sticky',
-                top: 0,
-                backgroundColor: 'white',
-                borderBottom: '1px solid #eee',
-              }}
-            >
+            <div className="sticky top-0 bg-popover border-b border-border p-2">
               <input
                 type="text"
                 placeholder={searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '6px 12px',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                }}
+                className="w-full p-2 border border-input  rounded-md bg-input text-foreground"
               />
             </div>
           )}
-          <div style={{ maxHeight: '250px', overflowY: 'auto' }}>{filteredChildren}</div>
+          <div
+            className="overflow-y-auto"
+            style={{
+              maxHeight: 'var(--radix-popover-content-available-height)',
+              paddingTop: searchable ? '8px' : '0', // Add padding to prevent overlap
+            }}
+          >
+            {filteredChildren}
+          </div>
         </Popover.Content>
       </Popover.Portal>
     );

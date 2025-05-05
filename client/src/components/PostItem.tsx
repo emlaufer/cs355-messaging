@@ -67,9 +67,9 @@ const PostItem = ({ post, users }: PostItemProps) => {
             <div className="flex justify-between items-center mb-1">
               <div>
                 {authors.length === 1 ? (
-                  <h3 className="text-sm font-medium text-gray-900">{primaryAuthor.name}</h3>
+                  <h3 className="text-sm font-medium">{primaryAuthor.name}</h3>
                 ) : (
-                  <h3 className="text-sm font-medium text-gray-900">
+                  <h3 className="text-sm font-medium">
                     {primaryAuthor.name}
                     <span className="text-muted-foreground font-normal">
                       {` with ${otherAuthors.length} ${otherAuthors.length === 1 ? 'other' : 'others'}`}
@@ -77,11 +77,11 @@ const PostItem = ({ post, users }: PostItemProps) => {
                   </h3>
                 )}
               </div>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-muted-foreground">
                 {formatDistanceToNow(new Date(timestamp))}
               </span>
             </div>
-            <p className="text-sm text-gray-700 whitespace-pre-line break-words">{message}</p>
+            <p className="text-sm whitespace-pre-line break-words">{message}</p>
           </div>
         </div>
       </CardContent>
@@ -90,4 +90,3 @@ const PostItem = ({ post, users }: PostItemProps) => {
 };
 
 export default PostItem;
-

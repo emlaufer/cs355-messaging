@@ -1,146 +1,169 @@
 import { useState } from 'react';
-import { Post, User } from '../types';
+import { Post, User, Circuit } from '../types';
 import PostItem from './PostItem';
 import UserList from './UserList';
 import PostForm from './PostForm';
+import UserSignupDialog from './UserSignupDialog';
+import CircuitUploadDialog from './CircuitUploadDialog';
+import Pagination from './Pagination';
+import { ModeToggle } from './ModeToggle';
+import { Button } from './ui/button';
+import { UserPlus, Cpu } from 'lucide-react';
 
 interface MessageBoardProps {
   posts: Post[];
   users: User[];
-  onAddPost: (post: Omit<Post, 'id' | 'timestamp'>) => void;
+  circuits: Circuit[];
+  onAddPost: (post: Omit<Post, '_id' | 'timestamp'>) => void;
+  onAddUser: (post: Omit<User, '_id'>) => void;
+  onAddCircuit: (post: Omit<Circuit, '_id'>) => void;
+  error: String | null;
+  setError?: (error: string | null) => void;
   isLoading?: boolean;
 }
 
-const MessageBoard = ({ posts, users, onAddPost, isLoading = false }: MessageBoardProps) => {
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+const POSTS_PER_PAGE = 10;
+
+const MessageBoard = ({
+  posts,
+  users,
+  circuits,
+  onAddPost,
+  onAddUser,
+  onAddCircuit,
+  error = null,
+  setError = () => {},
+  isLoading = false,
+}: MessageBoardProps) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const postsPerPage = 5;
-  const totalPages = Math.ceil(posts.length / postsPerPage);
+  const [signupDialogOpen, setSignupDialogOpen] = useState(false);
+  const [circuitDialogOpen, setCircuitDialogOpen] = useState(false);
 
-  const handleUserSelect = (userId: string) => {
-    setSelectedUserIds((prev) => {
-      // If user is already selected, remove them
-      if (prev.includes(userId)) {
-        return prev.filter((id) => id !== userId);
-      }
-      // Otherwise add them to selection
-      return [...prev, userId];
-    });
-  };
+  // TODO: fix
+  const totalPages = Math.ceil(posts.length / POSTS_PER_PAGE);
+  const indexOfLastPost = currentPage * POSTS_PER_PAGE;
+  const indexOfFirstPost = indexOfLastPost - POSTS_PER_PAGE;
+  const currentPosts = posts.slice(indexOfFirstPost, indexOfLastPost);
 
-  const handleAddPost = (post: Omit<Post, 'id' | 'timestamp'>) => {
+  const handleAddPost = (post: Omit<Post, '_id' | 'timestamp'>) => {
     onAddPost(post);
 
     // Reset to first page when new post is added
     setCurrentPage(1);
   };
 
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+    // Scroll to top of posts section
+    document.getElementById('posts-section')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
-    <div className="flex flex-col lg:flex-row gap-8">
-      {/* Sidebar with users */}
-      <div className="hidden lg:block lg:w-1/4">
-        <UserList users={users} selectedUserIds={selectedUserIds} onSelectUser={handleUserSelect} />
-      </div>
+    <div className="flex flex-col gap-8">
+      {/* Sticky container for navigation bar and error message */}
+      <div className="sticky top-0 z-20 bg-background border-b">
+        {/* Top navigation bar - always visible */}
+        <div className="flex justify-between items-center pb-2 pt-2">
+          <h1 className="text-xl font-bold">Message Board</h1>
 
-      {/* Main content */}
-      <div className="lg:w-3/4 space-y-8">
-        <PostForm
-          users={users}
-          selectedUserIds={selectedUserIds}
-          onSelectUser={handleUserSelect}
-          onClearSelection={() => setSelectedUserIds([])}
-          onAddPost={handleAddPost}
-        />
-
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Recent Messages</h2>
-          {isLoading ? (
-            <div className="text-center py-8">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-200 border-t-blue-500"></div>
-              <p className="mt-2 text-gray-500">Loading messages...</p>
-            </div>
-          ) : posts.length > 0 ? (
-            <>
-              {posts
-                .slice((currentPage - 1) * postsPerPage, currentPage * postsPerPage)
-                .map((post) => (
-                  <PostItem key={post.id} post={post} users={users} />
-                ))}
-
-              {/* Pagination controls */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-center mt-6 gap-2">
-                  <button
-                    onClick={() => setCurrentPage(1)}
-                    disabled={currentPage === 1}
-                    className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    &laquo;
-                  </button>
-                  <button
-                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                    className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    &lsaquo;
-                  </button>
-
-                  {Array.from({ length: totalPages }, (_, i) => i + 1)
-                    .filter((pageNum) => {
-                      // Show pages around the current page and at the edges
-                      return (
-                        pageNum === 1 ||
-                        pageNum === totalPages ||
-                        Math.abs(pageNum - currentPage) <= 1
-                      );
-                    })
-                    .map((pageNum, idx, arr) => {
-                      // Add ellipsis where there are gaps
-                      if (idx > 0 && pageNum - arr[idx - 1] > 1) {
-                        return (
-                          <span key={`ellipsis-${pageNum}`} className="px-3 py-1">
-                            &hellip;
-                          </span>
-                        );
-                      }
-
-                      return (
-                        <button
-                          key={pageNum}
-                          onClick={() => setCurrentPage(pageNum)}
-                          disabled={currentPage === pageNum}
-                          className={`px-3 py-1 rounded ${
-                            currentPage === pageNum
-                              ? 'bg-primary text-white'
-                              : 'bg-gray-200 hover:bg-gray-300'
-                          }`}
-                        >
-                          {pageNum}
-                        </button>
-                      );
-                    })}
-
-                  <button
-                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                    className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    &rsaquo;
-                  </button>
-                  <button
-                    onClick={() => setCurrentPage(totalPages)}
-                    disabled={currentPage === totalPages}
-                    className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    &raquo;
-                  </button>
-                </div>
-              )}
-            </>
-          ) : (
-            <p className="text-gray-500 text-center py-8">No messages yet. Be the first to post!</p>
-          )}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCircuitDialogOpen(true)}
+              className="flex items-center gap-1"
+            >
+              <Cpu className="h-4 w-4" />
+              <span className="hidden sm:inline">Upload Circuit</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSignupDialogOpen(true)}
+              className="flex items-center gap-1"
+            >
+              <UserPlus className="h-4 w-4" />
+              <span className="hidden sm:inline">Sign Up</span>
+            </Button>
+            <ModeToggle />
+          </div>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <div className="flex justify-between items-center">
+              <span className="block sm:inline">{error}</span>
+              <button className="ml-4 text-sm underline" onClick={() => setError(null)}>
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* Sidebar with users - visible only on large screens */}
+        <div className="hidden lg:block lg:w-1/4 space-y-6">
+          <div>
+            <UserList users={users} isLoading={isLoading} />
+          </div>
+        </div>
+
+        {/* Main content */}
+        <div className="lg:w-3/4 space-y-8">
+          <PostForm users={users} circuits={circuits} onAddPost={handleAddPost} />
+
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">Recent Messages</h2>
+            {isLoading ? (
+              <div className="text-center py-8">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border"></div>
+                <p className="mt-2 text-muted-foreground">Loading messages...</p>
+              </div>
+            ) : posts.length > 0 ? (
+              <>
+                <div className="space-y-4">
+                  {currentPosts.map((post) => (
+                    <PostItem key={post._id} post={post} users={users} />
+                  ))}
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center mt-6">
+                    <Pagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={handlePageChange}
+                    />
+                  </div>
+                )}
+
+                {/* Page indicator */}
+                {totalPages > 1 && (
+                  <div className="text-center text-sm text-muted-foreground">
+                    Showing {indexOfFirstPost + 1}-{Math.min(indexOfLastPost, posts.length)} of{' '}
+                    {posts.length} posts
+                  </div>
+                )}
+              </>
+            ) : (
+              <p>No messages yet. Be the first to post!</p>
+            )}
+          </div>
+        </div>
+        {/* User Signup Dialog */}
+        <UserSignupDialog
+          open={signupDialogOpen}
+          onOpenChange={setSignupDialogOpen}
+          onAddUser={onAddUser}
+        />
+        {/* User Signup Dialog */}
+        <CircuitUploadDialog
+          open={circuitDialogOpen}
+          onOpenChange={setCircuitDialogOpen}
+          onAddCircuit={onAddCircuit}
+        />
       </div>
     </div>
   );

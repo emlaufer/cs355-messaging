@@ -6,14 +6,15 @@ import topLevelAwait from 'vite-plugin-top-level-await';
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: '/class/cs355/',
   plugins: [react(), wasm(), topLevelAwait()],
   server: {
     port: 3000, // Set the desired port
     proxy: {
-      '/cgi-bin': {
+      '/class/cs355/cgi-bin': {
         target: 'http://localhost:8000', // If using CGI-based API, proxy to php server
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/cgi-bin/, ''),
+        rewrite: (path) => path.replace(/^\/class\/cs355\/cgi-bin/, ''),
       },
     },
   },

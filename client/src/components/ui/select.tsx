@@ -60,34 +60,110 @@ SelectScrollDownButton.displayName = SelectPrimitive.ScrollDownButton.displayNam
 
 const SelectContent = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
->(({ className, children, position = 'popper', ...props }, ref) => (
-  <SelectPrimitive.Portal>
-    <SelectPrimitive.Content
-      ref={ref}
-      className={cn(
-        'relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
-        position === 'popper' &&
-          'data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1',
-        className,
-      )}
-      position={position}
-      {...props}
-    >
-      <SelectScrollUpButton />
-      <SelectPrimitive.Viewport
-        className={cn(
-          'p-1',
-          position === 'popper' &&
-            'h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]',
-        )}
-      >
-        {children}
-      </SelectPrimitive.Viewport>
-      <SelectScrollDownButton />
-    </SelectPrimitive.Content>
-  </SelectPrimitive.Portal>
-));
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content> & {
+    searchable?: boolean;
+    onSearch?: (query: string, items: React.ReactElement[]) => React.ReactElement[];
+    searchPlaceholder?: string;
+  }
+>(
+  (
+    {
+      className,
+      children,
+      position = 'popper',
+      searchable = false,
+      onSearch,
+      searchPlaceholder = 'Search...',
+      ...props
+    },
+    ref,
+  ) => {
+    const [searchQuery, setSearchQuery] = React.useState('');
+
+    // Filter children based on the search query
+    // Default filter implementation
+    const defaultFilterFn = (query: string, items: React.ReactElement[]): React.ReactElement[] => {
+      if (!query) return items;
+
+      return items.filter((child) => {
+        if (!React.isValidElement(child)) return true;
+
+        // Extract text content from the child's props.children for searching
+        const childContent = (child.props as any).children;
+        if (!childContent) return true;
+
+        // If children is a React element with props.children.props.children that contains text nodes
+        // This is specifically for our current structure where Item > div > span contains user name
+        let textToSearch = '';
+        try {
+          if (
+            typeof childContent === 'object' &&
+            childContent.props &&
+            childContent.props.children
+          ) {
+            // Try to find text content in the nested structure
+            React.Children.forEach(childContent.props.children, (nestedChild) => {
+              if (React.isValidElement(nestedChild) && (nestedChild as any).props.children) {
+                if (typeof (nestedChild as any).props.children === 'string') {
+                  textToSearch += (nestedChild as any).props.children;
+                }
+              }
+            });
+          }
+        } catch (e) {
+          // Fail silently if structure doesn't match expectations
+        }
+
+        return textToSearch.toLowerCase().includes(query.toLowerCase());
+      });
+    };
+
+    const childrenArray = React.Children.toArray(children) as React.ReactElement[];
+    const filteredChildren = onSearch
+      ? onSearch(searchQuery, childrenArray)
+      : defaultFilterFn(searchQuery, childrenArray);
+
+    return (
+      <SelectPrimitive.Portal>
+        <SelectPrimitive.Content
+          ref={ref}
+          className={cn(
+            'relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
+            position === 'popper' &&
+              'data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1',
+            className,
+          )}
+          position={position}
+          {...props}
+        >
+          {searchable && (
+            <div className="sticky top-0 bg-popover border-b border-border p-2">
+              <input
+                type="text"
+                placeholder={searchPlaceholder}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full p-2 border border-input rounded-md bg-input text-foreground"
+                onKeyDown={(e) => e.stopPropagation()} // Prevent key events from propagating to the Select
+              />
+            </div>
+          )}
+          <SelectScrollUpButton />
+          <SelectPrimitive.Viewport
+            className={cn(
+              'p-1',
+              position === 'popper' &&
+                'h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]',
+            )}
+          >
+            {filteredChildren}
+          </SelectPrimitive.Viewport>
+          <SelectScrollDownButton />
+        </SelectPrimitive.Content>
+      </SelectPrimitive.Portal>
+    );
+  },
+);
 SelectContent.displayName = SelectPrimitive.Content.displayName;
 
 const SelectLabel = React.forwardRef<
@@ -113,6 +189,7 @@ const SelectItem = React.forwardRef<
       className,
     )}
     {...props}
+    onMouseDown={(e) => e.preventDefault()} // Prevent focus stealing
   >
     <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
       <SelectPrimitive.ItemIndicator>
@@ -149,4 +226,3 @@ export {
   SelectScrollUpButton,
   SelectScrollDownButton,
 };
-

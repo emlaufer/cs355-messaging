@@ -13,7 +13,8 @@ const MultiSelectTrigger = React.forwardRef<
   <MultiSelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      'flex w-full items-center justify-start rounded-md border border-input bg-background px-3 py-2 text-sm text-black ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 rounded-md',
+      'flex w-full items-center justify-start rounded-md border border-input bg-popover px-3 py-2 text-sm text-popover-foreground ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 rounded-md ',
+
       className,
     )}
     {...props}
@@ -28,7 +29,7 @@ const MultiSelectValue = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <MultiSelectPrimitive.Value
     ref={ref}
-    className={cn('line-clamp-1 flex-1 text-muted-foreground rounded-md', className)}
+    className={cn('line-clamp-1 flex-1 text-left text-muted-foreground rounded-md', className)}
     style={{
       justifyContent: 'flex-start',
     }}
