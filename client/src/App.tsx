@@ -84,7 +84,6 @@ function App() {
   const addPost = async (newPost: Omit<Post, '_id' | 'timestamp'>) => {
     try {
       console.log('adding post', newPost);
-      setLoading(true);
       const createdPost = await createPost(newPost);
       setPosts([createdPost, ...posts]);
       setError(null);
@@ -100,8 +99,6 @@ function App() {
         console.error('Unexpected error', err);
         setError('An unexpected error occurred. Please try again later.');
       }
-    } finally {
-      setLoading(false);
     }
   };
   console.log(circuits);
